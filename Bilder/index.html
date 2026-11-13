@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Katt som tar Salto</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050b14;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="spillSkjerm"></canvas>
+
+    <script>
+        const canvas = document.getElementById('spillSkjerm');
+        const ctx = canvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        // Fysikk-variabler (Superrask fart!)
+        let x = -60;
+        let y = height * 0.75;
+        let vinkel = 0;
+        let iLufta = false;
+        let fartY = 0;
+        let tyngdekraft = 0.04;
+
+        // Snøfnugg
+        const snø = [];
+        for(let i = 0; i < 100; i++) {
+            snø.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                fart: Math.random() * 2 + 1
+            });
+        }
+
+        function tegnBakke() {
+            // Tegn snøen i bunnen
+            ctx.fillStyle = '#f0f3f6';
+            ctx.fillRect(0, height * 0.75, width, height * 0.25);
+
+            // Selve HOPPET (en stor trekant midt på skjermen)
+            ctx.fillStyle = '#e2e7ec';
+            ctx.beginPath();
+            ctx.moveTo(width * 0.4, height * 0.75);
+            ctx.lineTo(width * 0.5, height * 0.55); // Toppen av hoppet
+            ctx.lineTo(width * 0.5, height * 0.75);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function animasjon() {
+            // Rens skjermen med en mørk vinterhimmel
+            ctx.fillStyle = '#050b14';
+            ctx.fillRect(0, 0, width, height);
+
+            // Tegn en stor glødende måne
+            ctx.fillStyle = '#fffbe6';
+            ctx.beginPath();
+            ctx.arc(width * 0.8, height * 0.2, 30, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Tegn bakken og hoppet
+            tegnBakke();
+
+            // Fysikk-logikk for katten
+            if (!iLufta) {
+                x += 6.5; // Kjørefart bortover
+
+                // Sjekk om katten kjører OPPOVER hoppet
+                if (x >= width * 0.4 && x <= width * 0.5) {
+                    let prosent = (x - width * 0.4) / (width * 0.01);
+                    y = (height * 0.75) - (prosent * 2.2);
+                    vinkel = -0.4; // Vipper brettet oppover rampa
+                } else {
+                    y = height * 0.75;
+                    vinkel = 0;
+                }
+
+                // Sjekk om katten flyr utfor kanten!
+                if (x > width * 0.5) {
+                    iLufta = true;
+                    fartY = -8; // Kraften som skyter katten opp i lufta
+                }
+            } else {
+                // Luftfart!
+                x += 6.5;
+                fartY += tyngdekraft; // Trekker katten nedover
+                y += fartY;
+
+                vinkel -= 0.18; // Gjør en kjapp BACKFLIP / SALTO i lufta!
+
+                // Sjekk om katten lander på snøen igjen
+                if (y >= height * 0.75) {
+                    y = height * 0.75;
+                    iLufta = false;
+                    vinkel = 0;
+                }
+            }
+
+            // Start på nytt hvis katten kjører ut av PC-skjermen
+            if (x > width + 50) {
+                x = -50;
+                y = height * 0.75;
+                iLufta = false;
+                vinkel = 0;
+            }
+
+            // --- TEGN KATTEN OG AKEBRETTET ---
+            ctx.save();
+            ctx.translate(x, y - 5); // Flytt til kattens posisjon
+            ctx.rotate(vinkel);      // Roter (salto)
+
+            // Det røde akebrettet
+            ctx.fillStyle = '#ef2b2d';
+            ctx.fillRect(-25, -2, 50, 6);
+
+            // Den lille fotballen foran på brettet
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(20, -5, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(19, -6, 2, 2); // Enkel fotball-prikk
+
+            // Kattekroppen (Grå firkant/sirkel)
+            ctx.fillStyle = '#6c757d';
+            ctx.fillRect(-15, -14, 25, 12);
+
+            // Kattehodet med ører
+            ctx.beginPath();
+            ctx.arc(10, -14, 7, 0, Math.PI * 2);
+            ctx.fill();
+            // Ører (små trekanter)
+            ctx.beginPath();
+            ctx.moveTo(5, -20); ctx.lineTo(8, -25); ctx.lineTo(11, -20); ctx.fill();
+
+            // Gult katteøye
+            ctx.fillStyle = '#ffea00';
+            ctx.fillRect(11, -16, 2, 2);
+
+            ctx.restore();
+
+            // Tegn snøfall
+            ctx.fillStyle = '#ffffff';
+            for(let i = 0; i < snø.length; i++) {
+                let f = snø[i];
+                ctx.fillRect(f.x, f.y, 2, 2);
+                f.y += f.fart;
+                if(f.y > height) {
+                    f.y = 0;
+                    f.x = Math.random() * width;
+                }
+            }
+
+            requestAnimationFrame(animasjon);
+        }
+
+        animasjon();
+    </script>
+</body>
+</html>
